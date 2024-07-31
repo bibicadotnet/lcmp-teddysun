@@ -204,18 +204,25 @@ add_vhost() {
 
 add_vhost_config() {
     cat >"/etc/caddy/conf.d/${domain}.conf" <<EOF
+www.${domain} {
+    redir https://${domain}{uri}
+}
 ${domain} {
-	header {
-		Strict-Transport-Security "max-age=31536000; preload"
-		X-Content-Type-Options nosniff
-		X-Frame-Options SAMEORIGIN
-	}
 	root * ${vhostdir}
-	encode gzip
+	encode zstd gzip
+
+#tls /etc/ssl/bibica.net.pem /etc/ssl/bibica.net.key.pem
+
 	php_fastcgi ${php_sock}
 	file_server {
+		precompressed gzip
 		index index.html
 	}
+
+	import wordpress_security
+	import static_header
+	import header_remove
+
 	log {
 		output file /var/log/caddy/access_${domain}.log {
 			roll_size 100mb
