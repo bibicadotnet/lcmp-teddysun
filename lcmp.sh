@@ -367,6 +367,47 @@ cat >/etc/caddy/Caddyfile <<EOF
 {
 	admin off
 }
+
+(wordpress_security) {
+	@disallowed {
+		not path /wp-includes/ms-files.php
+		path /wp-admin/includes/*.php
+		path /wp-includes/*.php
+		path /wp-config.php
+		path /wp-content/uploads/*.php
+		path /.user.ini
+		path /wp-content/debug.log
+		path *.sql
+		path *.sqlite
+	}
+	rewrite @disallowed '/index.php'
+}
+
+(static_header) {
+	@static {
+		file
+		path *.css *.js *.ico *.woff *.woff2
+	}
+	handle @static {
+		header Cache-Control "public, max-age=31536000"
+	}
+
+	@static-img {
+		file
+		path *.gif *.jpg *.jpeg *.png *.svg *.webp *.avif
+	}
+	handle @static-img {
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+}
+
+(header_remove) {
+	header -Link
+	header -Server
+	header -X-Pingback
+	header -X-Powered-By
+}
+
 import /etc/caddy/conf.d/*.conf
 EOF
 _error_detect "cp -f ${cur_dir}/conf/favicon.ico /data/www/default/"
